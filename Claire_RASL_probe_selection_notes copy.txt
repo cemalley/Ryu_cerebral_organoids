@@ -1,0 +1,70 @@
+try T1 quality first
+tiers are based on the quality of BLAST alignment of middle 18 bases to RefSeq.
+filter based on gene symbol and quality tier (may prefer using RefSeq IDs). what is refseq db vers?
+
+used Oligo7 software for probe design (requires large memory windows VM batch mode; see dave gerhold).
+
+choose probes that are > 100 bp away from the next probe (java code does the selection). goal is to go towards the 3' end (highest bp position). the 3 probes are ideally not overlapping > 50.
+the java code does probe evaluation and metrics to help with selection. then he selected some probes in spotfire.
+
+
+for alignment supply only the candidate probes in the fasta file. maximum 3/50 mismatches was used (used zero-based coordinates).
+
+
+for barcode design: potentially make barcodes longer, else 6/8 must be enough for up to 10 plates.
+
+
+barcodeR package; BARCOSEL.
+
+low template (low RNA) leads to a lot of misligations, so don't be as worried about percent mapping after alignment.
+
+for real screening, we will eventually use just two probes.
+
+
+
+TRND - Wei Zheng (in therapeutic discovery). may need DESeq2 support. may have a lot of noise due to a few differentiation protocols, technical noise.
+
+-------------------
+
+How to select probe sequences when there are none already ideal and filtered (14 or fewer matches = at least ranked in the list).
+
+
+Tips for filtering output from grepping ‘NM:’ in the blast results (better yet make an R function using gene symbol):
+
+aim for coverage in the gene over specificity for certain transcripts.
+18 base pairs = 9 on either side of the ligation point (probes are two 25-mers that are ligated together). central 18 is important.
+select 3 probes per gene.
+must establish the number of transcripts to hit. stay at 14 bp or lower for off-targets.
+between 40-90% of the transcript on the 3' end of it. middle ~2000 to end for instance.
+
+use biomart to get transcript length, mapping to refseq (NM ID to gene symbol) to identify which are off-target.
+
+------------------
+
+How to run John's python scripts:
+steps:
+0. cp */*.fastq.gz /Volumes/ncatssctl/NGS_related/RASLseq/ISRL005_190307_NB501931_0038_AH2LJNBGX9/ISRL005_demultiplexed/split_lane
+
+    1.    make config file i.e. sctl_RASL002.conf
+    2.    fastqs should be in ./data/
+    3.    python rasl_prep_slurm_swarm_192b_gz.py sctl_RASL002.conf (makes slurm scripts and file lists)
+    4.    swarm -f ./scripts/grid_submit_script_max_mismatch_3.sh -g 4. each one outputs two results files.
+    5.    cd output_max_3_misses
+    6. awk '{ a[FNR] = (a[FNR] ? a[FNR] FS : "") $2 "\t" $3 } END { for(i=1;i<=FNR;i++) print a[i] }' $(ls -1v *txt) > ISRL002_count.out # WORKS!
+# then had to replace spaces with tabs
+TAB=$'\t';sed "s/ /${TAB}&/g" ISRL002_count.out > ISRL002_count_tabs.out
+    7.    copy count_tabs.out and one rasl_txt to local.
+
+
+if there is a mismatch between oligo and sequence, but 3 or more mismatches in the second half, that read is dropped.
+
+ann = oligo annotations. ended up only reporting oligo ID, which contains the RefSeq ID.
+the fastq file is read every 4th line using modulus.
+
+
+-------
+
+
+
+
+
